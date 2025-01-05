@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "buddy:dev": "PORT=1421 vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
