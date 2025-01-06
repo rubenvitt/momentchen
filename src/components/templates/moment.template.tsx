@@ -1,6 +1,6 @@
 import {FormEvent, useEffect, useState} from 'react';
-import {Button, Card, Col, Input, List, Row, Select, Space, Tag, TimePicker, Typography} from 'antd';
-import {PiCalendar, PiClock} from "react-icons/pi";
+import {Button, Card, Col, Input, List, Row, Select, Space, Tag, TimePicker, Tooltip, Typography} from 'antd';
+import {PiBoxArrowDown, PiCalendar, PiClock, PiSpinnerBall} from "react-icons/pi";
 import dayjs from 'dayjs';
 import {Item, useCreateDatabaseEntry, useDatabase, useNotion} from "../../notion";
 
@@ -248,19 +248,37 @@ export const MomentTemplate = () => {
                                             />
                                         </Col>
                                         <Col flex="none">
-                                            <TimePicker
-                                                value={dayjs(formData.timestamp)}
-                                                format="HH:mm"
-                                                onChange={(time) => {
-                                                    if (time) {
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            timestamp: time.format('YYYY-MM-DDTHH:mm:ss')
-                                                        }));
-                                                    }
-                                                }}
-                                                className="w-24"
-                                            />
+                                            <Space size={0}>
+                                                <TimePicker
+                                                    rootClassName="rounded-r-none border-r-0"
+                                                    value={dayjs(formData.timestamp)}
+                                                    format="HH:mm"
+                                                    onChange={(time) => {
+                                                        if (time) {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                timestamp: time.format('YYYY-MM-DDTHH:mm:ss')
+                                                            }));
+                                                        }
+                                                    }}
+                                                    showNow
+                                                    className="w-24"
+                                                />
+                                                <Tooltip title="Jetzt">
+                                                    <Button
+                                                        rootClassName="rounded-l-none"
+                                                        onClick={() => {
+                                                            const now = dayjs();
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                timestamp: now.format('YYYY-MM-DDTHH:mm:ss')
+                                                            }));
+                                                        }}
+                                                        icon={<PiSpinnerBall/>}
+                                                    >
+                                                    </Button>
+                                                </Tooltip>
+                                            </Space>
                                         </Col>
                                     </Row>
 
@@ -283,28 +301,19 @@ export const MomentTemplate = () => {
 
                                     <Row gutter={[8, 8]} align="middle">
                                         <Col xs={24} sm={12} md={8}>
-                                            <Space>
-                                                <Button
-                                                    type={formData.isProject ? 'primary' : 'default'}
-                                                    onClick={() => setFormData(prev => ({
-                                                        ...prev,
-                                                        isProject: true,
-                                                        category: ''
-                                                    }))}
-                                                >
-                                                    Projekt
-                                                </Button>
-                                                <Button
-                                                    type={!formData.isProject ? 'primary' : 'default'}
-                                                    onClick={() => setFormData(prev => ({
-                                                        ...prev,
-                                                        isProject: false,
-                                                        category: ''
-                                                    }))}
-                                                >
-                                                    Lebensbereich
-                                                </Button>
-                                            </Space>
+                                            <Select
+                                                className="w-full"
+                                                value={formData.isProject ? 'Projekt' : 'Lebensbereich'}
+                                                onChange={(value) => setFormData(prev => ({
+                                                    ...prev,
+                                                    isProject: value === 'Projekt',
+                                                    category: ''
+                                                }))}
+                                                options={[
+                                                    {label: 'Projekt', value: 'Projekt'},
+                                                    {label: 'Lebensbereich', value: 'Lebensbereich'}
+                                                ]}
+                                            />
                                         </Col>
                                         <Col xs={24} sm={12} md={16}>
                                             <Select
@@ -338,9 +347,9 @@ export const MomentTemplate = () => {
                                         </Col>
                                     </Row>
                                     <Row justify="end">
-                                        <Button type="primary" htmlType="submit" loading={isPending}>
-                                            Absenden
-                                        </Button>
+                                        <Tooltip title="Moment speichern" placement="topLeft" className="mr-2">
+                                            <Button icon={<PiBoxArrowDown/>} type="primary" htmlType="submit" loading={isPending}/>
+                                        </Tooltip>
                                     </Row>
                                 </Space>
                             </form>
