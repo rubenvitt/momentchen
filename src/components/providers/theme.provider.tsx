@@ -56,8 +56,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
                 theme={{
                     algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
                     token: {
-                        // Hier können wir das Farbschema anpassen
-                        colorPrimary: '#1677ff',
+                        colorPrimary: '#ff6816',
                     },
                 }}
             >
