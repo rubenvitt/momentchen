@@ -1,8 +1,15 @@
-import {FormEvent, useEffect, useState} from 'react';
+import {FormEvent, useCallback, useEffect, useState} from 'react';
 import {Button, Card, Col, Input, List, Row, Select, Space, Tag, TimePicker, Tooltip, Typography} from 'antd';
 import {PiBoxArrowDown, PiCalendar, PiClock, PiSpinnerBall} from "react-icons/pi";
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import {Item, useCreateDatabaseEntry, useDatabase, useNotion} from "../../notion";
+import {ThemeToggle} from "../providers/theme.provider.tsx";
+
+// Dayjs Plugins für Zeitzonen-Handling aktivieren
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const {Text} = Typography;
 
@@ -42,6 +49,27 @@ export const MomentTemplate = () => {
     const {databaseIds, client} = useNotion();
     const [momentTypes, setMomentTypes] = useState<SelectOption[]>([]);
 
+    // Aktualisierung der Zeit alle 60 Sekunden
+    const [currentTime, setCurrentTime] = useState(dayjs());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(dayjs());
+        }, 1000); // Jede Sekunde aktualisieren
+
+        return () => clearInterval(timer);
+    }, []);
+
+    // Funktion zum Konvertieren der lokalen Zeit in UTC für Notion
+    const convertToNotionTime = useCallback((localTime: dayjs.Dayjs) => {
+        return localTime.utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    }, []);
+
+    // Funktion zum Konvertieren der Notion-Zeit (UTC) in lokale Zeit
+    const convertFromNotionTime = useCallback((notionTime: string) => {
+        return dayjs.utc(notionTime).local();
+    }, []);
+
     useEffect(() => {
         const fetchMomentTypes = async () => {
             if (!databaseIds?.moments || !client) return;
@@ -52,7 +80,6 @@ export const MomentTemplate = () => {
                 });
 
                 const typProperty = database.properties['Typ'];
-                console.log('typProperties', typProperty);
                 const typOptions = (typProperty?.type === 'select' ? typProperty.select?.options : []) || [];
                 setMomentTypes(typOptions.map(option => ({
                     id: option.id,
@@ -74,13 +101,13 @@ export const MomentTemplate = () => {
                 {
                     property: 'Zeitpunkt',
                     date: {
-                        on_or_after: dayjs().startOf('day').toISOString()
+                        on_or_after: dayjs().startOf('day').utc().format()
                     }
                 },
                 {
                     property: 'Zeitpunkt',
                     date: {
-                        before: dayjs().endOf('day').toISOString()
+                        before: dayjs().endOf('day').utc().format()
                     }
                 }
             ]
@@ -142,8 +169,18 @@ export const MomentTemplate = () => {
         type: '',
         category: '',
         isProject: true,
-        timestamp: new Date().toISOString().slice(0, 16)
+        timestamp: convertToNotionTime(currentTime)
     });
+
+    // Automatische Aktualisierung der Formularzeit
+    useEffect(() => {
+        if (!formData.description) { // Nur aktualisieren wenn kein Text eingegeben wurde
+            setFormData(prev => ({
+                ...prev,
+                timestamp: convertToNotionTime(currentTime)
+            }));
+        }
+    }, [currentTime, convertToNotionTime]);
 
     useEffect(() => {
         if (momentTypes.length > 0 && !formData.type) {
@@ -158,8 +195,6 @@ export const MomentTemplate = () => {
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-
-        console.log('[submitting] formData', formData);
 
         if (!client || !databaseIds?.moments) return;
 
@@ -181,7 +216,7 @@ export const MomentTemplate = () => {
                 },
                 Zeitpunkt: {
                     date: {
-                        start: formData.timestamp
+                        start: formData.timestamp // Bereits im UTC-Format
                     }
                 }
             };
@@ -205,13 +240,14 @@ export const MomentTemplate = () => {
                 type: momentTypes[0]?.name || '',
                 category: '',
                 isProject: true,
-                timestamp: new Date().toISOString().slice(0, 16)
+                timestamp: convertToNotionTime(currentTime)
             });
         } catch (error) {
             console.error('Fehler beim Erstellen des Moments:', error);
         }
     };
 
+    // Funktion zum Konvertieren der Notion-Farben in Ant Design Farben
     const getNotionColor = (notionColor: string = 'default'): string => {
         const colorMap: Record<string, string> = {
             blue: 'blue',
@@ -228,12 +264,28 @@ export const MomentTemplate = () => {
         return colorMap[notionColor] || 'default';
     };
 
+    // Render-Part für die Zeit im List.Item
+    const renderTime = (notionTime: string) => {
+        const localTime = convertFromNotionTime(notionTime);
+        return (
+            <Space size="small">
+                <PiClock className="text-gray-400"/>
+                <Text type="secondary">
+                    {localTime.format('HH:mm')}
+                </Text>
+            </Space>
+        );
+    };
+
     return (
         <Row justify="center">
             <Col xs={24} sm={24} md={20} lg={16} xl={14} xxl={12}>
                 <div className="flex flex-col h-screen">
                     <div className="p-4 flex-none">
-                        <Card className="mb-4">
+                        <div className="flex justify-end mb-4">
+                            <ThemeToggle />
+                        </div>
+                        <Card className="mb-4 dark:bg-gray-800">
                             <form onSubmit={handleSubmit}>
                                 <Space direction="vertical" size="middle" className="w-full">
                                     <Row gutter={[8, 8]}>
@@ -251,13 +303,13 @@ export const MomentTemplate = () => {
                                             <Space size={0}>
                                                 <TimePicker
                                                     rootClassName="rounded-r-none border-r-0"
-                                                    value={dayjs(formData.timestamp)}
+                                                    value={convertFromNotionTime(formData.timestamp)}
                                                     format="HH:mm"
                                                     onChange={(time) => {
                                                         if (time) {
                                                             setFormData(prev => ({
                                                                 ...prev,
-                                                                timestamp: time.format('YYYY-MM-DDTHH:mm:ss')
+                                                                timestamp: convertToNotionTime(time)
                                                             }));
                                                         }
                                                     }}
@@ -271,7 +323,7 @@ export const MomentTemplate = () => {
                                                             const now = dayjs();
                                                             setFormData(prev => ({
                                                                 ...prev,
-                                                                timestamp: now.format('YYYY-MM-DDTHH:mm:ss')
+                                                                timestamp: convertToNotionTime(now)
                                                             }));
                                                         }}
                                                         icon={<PiSpinnerBall/>}
@@ -332,12 +384,12 @@ export const MomentTemplate = () => {
                                                     category: value
                                                 }))}
                                                 options={formData.isProject
-                                                    ? (projectsQuery.data as Item<unknown>[] || []).map(item => ({
+                                                    ? (projectsQuery.data || []).map(item => ({
                                                         label: <div className="truncate max-w-full">{item.title}</div>,
                                                         value: item.id,
                                                         searchText: item.id + " " + item.title
                                                     }))
-                                                    : (lifeAreasQuery.data as Item<unknown>[] || []).map(item => ({
+                                                    : (lifeAreasQuery.data || []).map(item => ({
                                                         label: <div className="truncate max-w-full">{item.title}</div>,
                                                         value: item.id,
                                                         searchText: item.id + " " + item.title
@@ -355,7 +407,7 @@ export const MomentTemplate = () => {
                             </form>
                         </Card>
                     </div>
-                    <div className="flex-1 p-4 overflow-autoflex-1 overflow-auto">
+                    <div className="flex-1 p-4 overflow-auto">
                         <Card
                             title={
                                 <Row justify="space-between" align="middle">
@@ -363,10 +415,11 @@ export const MomentTemplate = () => {
                                         Heute ({momentsQuery.data?.length || 0})
                                     </Col>
                                     <Col>
-                                        <PiCalendar className="text-gray-400"/>
+                                        <PiCalendar className="text-gray-400 dark:text-gray-500"/>
                                     </Col>
                                 </Row>
                             }
+                            className="dark:bg-gray-800"
                         >
                             <List
                                 itemLayout="vertical"
@@ -392,17 +445,12 @@ export const MomentTemplate = () => {
                                                             <Text>{moment.title}</Text>
                                                             <div className="mt-2">
                                                                 <Space size="small" wrap>
-                                                                    <Space size="small">
-                                                                        <PiClock className="text-gray-400"/>
-                                                                        <Text type="secondary">
-                                                                            {dayjs(moment.content.properties.Zeitpunkt.date.start).format('HH:mm')}
-                                                                        </Text>
-                                                                    </Space>
+                                                                    {renderTime(moment.content.properties.Zeitpunkt.date.start)}
                                                                     {relation && (
                                                                         <Tag color={relation.type === 'project' ? 'blue' : 'green'}>
-                                                                            <span className="truncate inline-block align-bottom">
+                                                                        <span className="truncate inline-block align-bottom">
                                                                             {relation.title}
-                                                                            </span>
+                                                                        </span>
                                                                         </Tag>
                                                                     )}
                                                                 </Space>
