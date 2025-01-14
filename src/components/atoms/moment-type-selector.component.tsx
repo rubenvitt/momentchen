@@ -1,6 +1,6 @@
+import {Radio} from "antd";
 import {SelectOption} from "../../types";
-import {Space, Tag} from "antd";
-import {getNotionColor} from "../../helper";
+import {getNotionBackgroundColor, getNotionForegroundColor} from "../../helper";
 
 export function MomentTypeSelector({types, selectedType, onTypeSelect}: {
     types: SelectOption[],
@@ -8,17 +8,22 @@ export function MomentTypeSelector({types, selectedType, onTypeSelect}: {
     onTypeSelect: (type: string) => void
 }) {
     return (
-        <Space wrap size={[0, 8]}>
-            {types.map(type => (
-                <Tag
+        <Radio.Group
+            value={selectedType}
+            onChange={(e) => onTypeSelect(e.target.value)}
+        >
+            {types.map((type) => (
+                <Radio.Button
                     key={type.id}
-                    color={selectedType === type.name ? getNotionColor(type.color) : 'default'}
-                    className="cursor-pointer select-none m-1"
-                    onClick={() => onTypeSelect(type.name)}
+                    value={type.name}
+                    style={{
+                        color: selectedType === type.name ? getNotionForegroundColor(type.color) : undefined,
+                        backgroundColor: selectedType === type.name ? getNotionBackgroundColor(type.color) : undefined,
+                    }}
                 >
                     {type.name}
-                </Tag>
+                </Radio.Button>
             ))}
-        </Space>
+        </Radio.Group>
     );
 }

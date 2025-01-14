@@ -1,4 +1,5 @@
 // Helper functions
+
 export const resolveRelation = (relationId: string | undefined, projectsQuery: any, lifeAreasQuery: any) => {
     if (!relationId) return null;
 
@@ -10,6 +11,9 @@ export const resolveRelation = (relationId: string | undefined, projectsQuery: a
 
     return null;
 };
+
+
+
 export const getNotionColor = (notionColor: string = 'default'): string => {
     const colorMap: Record<string, string> = {
         blue: 'blue',
@@ -21,6 +25,30 @@ export const getNotionColor = (notionColor: string = 'default'): string => {
         purple: 'purple',
         pink: 'pink',
         gray: 'default',
+        default: 'default'
+    };
+    return colorMap[notionColor] || 'default';
+};
+
+export const getNotionForegroundColor = (notionColor: string = 'default'): string => {
+    const backgroundColor = getNotionBackgroundColor(notionColor);
+
+    const isLightBackground = backgroundColor === 'yellow';
+
+    return isLightBackground ? 'black' : 'white';
+}
+
+export const getNotionBackgroundColor = (notionColor: string = 'default'): string => {
+    const colorMap: Record<string, string> = {
+        blue: 'blue',
+        brown: 'brown',
+        green: 'green',
+        yellow: 'yellow',
+        red: 'red',
+        orange: 'orange',
+        purple: 'purple',
+        pink: 'pink',
+        gray: 'gray',
         default: 'default'
     };
     return colorMap[notionColor] || 'default';
