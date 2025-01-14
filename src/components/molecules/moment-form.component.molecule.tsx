@@ -1,9 +1,10 @@
 import {MomentFormProps} from "../../types";
-import {Button, Col, Input, Row, Space, Tooltip} from "antd";
+import {Button, Col, Input, InputRef, Row, Space, Tooltip} from "antd";
 import {MomentTypeSelector} from "../atoms/moment-type-selector.component.tsx";
 import {CategorySelector} from "../atoms/category-selector.component.tsx";
 import {PiBoxArrowDown} from "react-icons/pi";
 import {TimeInput} from "./time-input.molecule.tsx";
+import {useRef} from "react";
 
 export function MomentForm({
                                formData,
@@ -16,14 +17,17 @@ export function MomentForm({
                                projectsQuery,
                                lifeAreasQuery
                            }: MomentFormProps) {
+    const ref = useRef<InputRef>(null)
+
     return (
-        <form onSubmit={onSubmit}>
+        <form onSubmit={(e) => onSubmit(e).then(() => ref.current?.focus())}>
             <Space direction="vertical" size="middle" className="w-full">
                 <Row gutter={[8, 8]}>
                     <Col flex="auto">
                         <Input
                             placeholder="Was ist passiert? Drücke Enter zum Speichern"
                             value={formData.description}
+                            ref={ref}
                             onChange={(e) => setFormData(prev => ({
                                 ...prev,
                                 description: e.target.value
