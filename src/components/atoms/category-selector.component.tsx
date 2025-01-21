@@ -1,5 +1,5 @@
-import {FormData, LifeAreaItem, ProjectItem, QueryResult} from "../../types";
-import {Col, Row, Select} from "antd";
+import { Col, Row, Select } from "antd";
+import { FormData, LifeAreaItem, ProjectItem, QueryResult } from "../../types";
 
 export function CategorySelector({
                                      formData,
@@ -29,6 +29,8 @@ export function CategorySelector({
                 <Select
                     className="w-full"
                     showSearch
+                    // @ts-ignore
+                    spellCheck="false"
                     filterOption={(input, option) =>
                         (option?.searchText ?? '').toLowerCase().includes(input.toLowerCase())
                     }
