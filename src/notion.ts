@@ -1,10 +1,10 @@
 // src/notion.ts
-import {useEffect, useMemo, useState} from "react";
-import {initStorage} from "./storage.ts";
-import {Client} from "@notionhq/client";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {isTauri} from "@tauri-apps/api/core";
-import {fetch} from "@tauri-apps/plugin-http";
+import { Client } from "@notionhq/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isTauri } from "@tauri-apps/api/core";
+import { fetch } from "@tauri-apps/plugin-http";
+import { useEffect, useMemo, useState } from "react";
+import { initStorage } from "./storage.ts";
 
 const STORAGE_KEYS = {
     NOTION_TOKEN: 'notion_token',
@@ -160,8 +160,7 @@ export function useDatabase<T>(
             }
         },
         enabled: !!client && notionToken && !!databaseId,
-        staleTime: 1000 * 60 * 5, // 5 Minuten Cache
-        gcTime: 1000 * 60 * 60, // 1 Stunde Garbage Collection
+        refetchInterval: 1000 * 15 // 15 Sekunden
     });
 }
 // Optional: Mutation Hook für das Erstellen neuer Einträge
