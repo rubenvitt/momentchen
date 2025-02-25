@@ -1,10 +1,10 @@
-import {MomentFormProps} from "../../types";
-import {Button, Col, Input, InputRef, Row, Space, Tooltip} from "antd";
-import {MomentTypeSelector} from "../atoms/moment-type-selector.component.tsx";
-import {CategorySelector} from "../atoms/category-selector.component.tsx";
-import {PiBoxArrowDown} from "react-icons/pi";
-import {TimeInput} from "./time-input.molecule.tsx";
-import {useRef} from "react";
+import { Button, Col, Input, InputRef, Row, Space, Tooltip } from "antd";
+import { useRef } from "react";
+import { PiBoxArrowDown, PiFloppyDisk } from "react-icons/pi";
+import { MomentFormProps } from "../../types";
+import { CategorySelector } from "../atoms/category-selector.component.tsx";
+import { MomentTypeSelector } from "../atoms/moment-type-selector.component.tsx";
+import { TimeInput } from "./time-input.molecule.tsx";
 
 export function MomentForm({
                                formData,
@@ -15,8 +15,9 @@ export function MomentForm({
                                onSubmit,
                                isPending,
                                projectsQuery,
-                               lifeAreasQuery
-                           }: MomentFormProps) {
+    lifeAreasQuery,
+    isEditing = false
+}: MomentFormProps & { isEditing?: boolean }) {
     const ref = useRef<InputRef>(null)
 
     return (
@@ -63,13 +64,15 @@ export function MomentForm({
                 />
 
                 <Row justify="end">
-                    <Tooltip title="Moment speichern" placement="topLeft" className="mr-2">
+                    <Tooltip title={isEditing ? "Änderungen speichern" : "Moment speichern"} placement="topLeft" className="mr-2">
                         <Button
-                            icon={<PiBoxArrowDown/>}
+                            icon={isEditing ? <PiFloppyDisk /> : <PiBoxArrowDown />}
                             type="primary"
                             htmlType="submit"
                             loading={isPending}
-                        />
+                        >
+                            {isEditing ? "Speichern" : "Erstellen"}
+                        </Button>
                     </Tooltip>
                 </Row>
             </Space>

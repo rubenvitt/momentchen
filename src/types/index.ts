@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
-import {FormEvent} from "react";
-import {Item} from "../notion.ts";
+import { FormEvent } from "react";
+import { Item } from "../notion.ts";
 
 export interface MomentProperties {
     Name: {
@@ -29,13 +29,14 @@ export interface MomentFormProps {
     formData: FormData;
     setFormData: (data: FormData | ((prev: FormData) => FormData)) => void;
     momentTypes: SelectOption[];
-    currentTime: dayjs.Dayjs;
+    currentTime?: dayjs.Dayjs;
     convertToNotionTime: (time: dayjs.Dayjs) => string;
     convertFromNotionTime: (time: string) => dayjs.Dayjs;
     onSubmit: (e: FormEvent) => Promise<void>;
     isPending: boolean;
     projectsQuery: QueryResult<ProjectItem>;
     lifeAreasQuery: QueryResult<LifeAreaItem>;
+    isEditing?: boolean;
 }
 
 export interface SelectOption {

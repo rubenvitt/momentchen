@@ -185,3 +185,26 @@ export function useCreateDatabaseEntry(databaseId: string) {
         },
     });
 }
+
+// Hook für das Aktualisieren eines bestehenden Eintrags
+export function useUpdateDatabaseEntry() {
+    const { client } = useNotion();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ pageId, properties }: { pageId: string, properties: any }) => {
+            if (!client) {
+                throw new Error("Notion client nicht initialisiert");
+            }
+
+            return await client.pages.update({
+                page_id: pageId,
+                properties,
+            });
+        },
+        onSuccess: async () => {
+            // Invalidiere alle database queries nach erfolgreicher Mutation
+            await queryClient.invalidateQueries({ queryKey: ['database'] });
+        },
+    });
+}

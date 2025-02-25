@@ -1,14 +1,15 @@
-import {FormEvent} from 'react';
-import {Card, Col, Row} from 'antd';
+import { Button, Card, Col, Row } from 'antd';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import {useCreateDatabaseEntry, useDatabase, useNotion} from "../../notion";
-import {ThemeToggle} from "../providers/theme.provider.tsx";
-import {useCurrentTime, useTimeConversion} from "../../hooks/time.ts";
-import {useMomentForm, useMomentTypes} from "../../hooks/moment.ts";
-import {MomentForm} from "../molecules/moment-form.component.molecule.tsx";
-import {MomentList} from "../organisms/moment-list.organism.tsx";
+import utc from 'dayjs/plugin/utc';
+import { FormEvent, useState } from 'react';
+import { useMomentForm, useMomentTypes } from "../../hooks/moment.ts";
+import { useCurrentTime, useTimeConversion } from "../../hooks/time.ts";
+import { useCreateDatabaseEntry, useDatabase, useNotion, useUpdateDatabaseEntry } from "../../notion";
+import { MomentItem } from '../../types';
+import { MomentForm } from "../molecules/moment-form.component.molecule.tsx";
+import { MomentList } from "../organisms/moment-list.organism.tsx";
+import { ThemeToggle } from "../providers/theme.provider.tsx";
 
 // Activate dayjs plugins for timezone handling
 dayjs.extend(utc);
@@ -20,7 +21,12 @@ export function MomentTemplate() {
     const momentTypes = useMomentTypes(notionContext);
     const {convertToNotionTime, convertFromNotionTime} = useTimeConversion();
     const {formData, setFormData} = useMomentForm(momentTypes, currentTime, convertToNotionTime);
-    const {mutateAsync, isPending} = useCreateDatabaseEntry(notionContext.databaseIds?.moments ?? '');
+    const { mutateAsync: createMoment, isPending: isCreating } = useCreateDatabaseEntry(notionContext.databaseIds?.moments ?? '');
+    const { mutateAsync: updateMoment, isPending: isUpdating } = useUpdateDatabaseEntry();
+
+    // Zustand für den Bearbeitungsmodus
+    const [editingMoment, setEditingMoment] = useState<MomentItem | null>(null);
+    const isPending = isCreating || isUpdating;
 
     const momentsQuery = useDatabase(
         notionContext.databaseIds?.moments || '',
@@ -113,15 +119,52 @@ export function MomentTemplate() {
                     (properties as any)['Projekt'] = {
                         relation: [{id: formData.category}]
                     };
+                    // Bei Bearbeitung vorhandene Lebensbereich-Relation löschen
+                    if (editingMoment && editingMoment.content.properties.Lebensbereich) {
+                        (properties as any)['Lebensbereich'] = {
+                            relation: []
+                        };
+                    }
                 } else {
                     (properties as any)['Lebensbereich'] = {
                         relation: [{id: formData.category}]
                     };
+                    // Bei Bearbeitung vorhandene Projekt-Relation löschen
+                    if (editingMoment && editingMoment.content.properties.Projekt) {
+                        (properties as any)['Projekt'] = {
+                            relation: []
+                        };
+                    }
+                }
+            } else {
+                // Wenn keine Kategorie gewählt ist, bestehende Relationen löschen
+                if (editingMoment) {
+                    if (editingMoment.content.properties.Projekt) {
+                        (properties as any)['Projekt'] = {
+                            relation: []
+                        };
+                    }
+                    if (editingMoment.content.properties.Lebensbereich) {
+                        (properties as any)['Lebensbereich'] = {
+                            relation: []
+                        };
+                    }
                 }
             }
 
-            await mutateAsync(properties);
+            if (editingMoment) {
+                // Moment aktualisieren
+                await updateMoment({
+                    pageId: editingMoment.id,
+                    properties
+                });
+                setEditingMoment(null);
+            } else {
+                // Neuen Moment erstellen
+                await createMoment(properties);
+            }
 
+            // Formular zurücksetzen
             setFormData({
                 description: '',
                 type: momentTypes[0]?.name || '',
@@ -130,10 +173,40 @@ export function MomentTemplate() {
                 timestamp: convertToNotionTime(currentTime)
             });
         } catch (error) {
-            console.error('Fehler beim Erstellen des Moments:', error);
+            console.error('Fehler beim Speichern des Moments:', error);
         }
     };
-3
+
+    // Handler für das Bearbeiten eines Moments
+    const handleEditMoment = (moment: MomentItem) => {
+        const momentProps = moment.content.properties;
+        const relationId = momentProps.Projekt?.relation?.[0]?.id ||
+            momentProps.Lebensbereich?.relation?.[0]?.id || '';
+        const isProject = !!momentProps.Projekt?.relation?.[0]?.id;
+
+        setFormData({
+            description: moment.title,
+            type: momentProps.Typ?.select?.name || momentTypes[0]?.name || '',
+            category: relationId,
+            isProject: isProject,
+            timestamp: momentProps.Zeitpunkt.date.start
+        });
+
+        setEditingMoment(moment);
+    };
+
+    // Handler für das Abbrechen der Bearbeitung
+    const handleCancelEdit = () => {
+        setEditingMoment(null);
+        setFormData({
+            description: '',
+            type: momentTypes[0]?.name || '',
+            category: '',
+            isProject: true,
+            timestamp: convertToNotionTime(currentTime)
+        });
+    };
+
     return <Row justify="center">
         <Col xs={24} sm={24} md={20} lg={16} xl={14} xxl={12}>
             <div className="flex flex-col h-screen">
@@ -142,6 +215,19 @@ export function MomentTemplate() {
                         <ThemeToggle/>
                     </div>
                     <Card className="mb-4 dark:bg-gray-800">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-lg font-medium m-0">
+                                {editingMoment ? 'Moment bearbeiten' : 'Neuen Moment erstellen'}
+                            </h3>
+                            {editingMoment && (
+                                <Button
+                                    onClick={handleCancelEdit}
+                                    size="small"
+                                >
+                                    Abbrechen
+                                </Button>
+                            )}
+                        </div>
                         <MomentForm
                             formData={formData}
                             setFormData={setFormData}
@@ -153,6 +239,7 @@ export function MomentTemplate() {
                             isPending={isPending}
                             projectsQuery={projectsQuery}
                             lifeAreasQuery={lifeAreasQuery}
+                            isEditing={!!editingMoment}
                         />
                     </Card>
                 </div>
@@ -162,6 +249,7 @@ export function MomentTemplate() {
                         projectsQuery={projectsQuery}
                         lifeAreasQuery={lifeAreasQuery}
                         convertFromNotionTime={convertFromNotionTime}
+                        onEditMoment={handleEditMoment}
                     />
                 </div>
             </div>
