@@ -267,6 +267,7 @@
 					"\".\"",
 				);
 				INFOPLIST_FILE = momentchen_iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -293,7 +294,7 @@
 					"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = dev.rubeen.apps.momentchen;
-				PRODUCT_NAME = momentchen;
+				PRODUCT_NAME = "momentchen";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64  arm64-sim";
@@ -320,6 +321,7 @@
 					"\".\"",
 				);
 				INFOPLIST_FILE = momentchen_iOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -346,7 +348,7 @@
 					"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = dev.rubeen.apps.momentchen;
-				PRODUCT_NAME = momentchen;
+				PRODUCT_NAME = "momentchen";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64  arm64-sim";

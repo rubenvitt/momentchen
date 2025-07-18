@@ -33,7 +33,7 @@ export function MomentListItem({
     const avatarTextColor = isDarkBg ? 'white' : 'rgba(0,0,0,0.8)';
 
     return (
-        <List.Item className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors p-2 rounded-md">
+        <List.Item className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors p-4 rounded-md">
             <Row gutter={[16, 12]} align="middle" className="w-full">
                 <Col xs={24} sm={24}>
                     <Space size={16} align="start" className="w-full">
